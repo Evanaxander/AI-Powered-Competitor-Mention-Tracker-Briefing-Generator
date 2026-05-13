@@ -1,0 +1,780 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Deskflow — Competitive Intelligence</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:ital,wght@0,300;0,400;0,500;1,400&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet" />
+  <!-- marked.js for rendering Markdown output in the browser -->
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+
+  <style>
+    /* ── Design: Dark editorial / intelligence terminal aesthetic ── */
+    :root {
+      --bg:        #0a0a0c;
+      --surface:   #111115;
+      --border:    #222228;
+      --accent:    #e8ff47;       /* acid yellow — sharp, alert */
+      --accent2:   #47ffe8;       /* teal for secondary highlights */
+      --text:      #e4e4ec;
+      --muted:     #5a5a6e;
+      --danger:    #ff4747;
+      --mono:      'DM Mono', monospace;
+      --sans:      'Syne', sans-serif;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--mono);
+      font-size: 14px;
+      line-height: 1.7;
+      min-height: 100vh;
+    }
+
+    /* ── Scanline texture overlay ── */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background: repeating-linear-gradient(
+        0deg,
+        transparent,
+        transparent 2px,
+        rgba(255,255,255,0.012) 2px,
+        rgba(255,255,255,0.012) 4px
+      );
+      pointer-events: none;
+      z-index: 9999;
+    }
+
+    /* ── Layout ── */
+    .container {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 48px 24px;
+    }
+
+    /* ── Header ── */
+    header {
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 32px;
+      margin-bottom: 40px;
+    }
+
+    .logo-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 8px;
+    }
+
+    .logo-badge {
+      background: var(--accent);
+      color: #000;
+      font-family: var(--sans);
+      font-weight: 800;
+      font-size: 11px;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      padding: 4px 10px;
+      border-radius: 2px;
+    }
+
+    .logo-divider {
+      color: var(--muted);
+      font-size: 18px;
+    }
+
+    h1 {
+      font-family: var(--sans);
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--muted);
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .tagline {
+      font-size: 12px;
+      color: var(--muted);
+      margin-top: 4px;
+    }
+
+    .tagline span {
+      color: var(--accent2);
+    }
+
+    /* ── Panel ── */
+    .panel {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 28px;
+      margin-bottom: 20px;
+    }
+
+    .panel-label {
+      font-size: 10px;
+      font-weight: 500;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .panel-label::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: var(--border);
+    }
+
+    /* ── Tags Input ── */
+    .tags-wrapper {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      align-items: center;
+      padding: 12px;
+      border: 1px solid var(--border);
+      border-radius: 3px;
+      background: var(--bg);
+      min-height: 52px;
+      cursor: text;
+      transition: border-color 0.15s;
+    }
+
+    .tags-wrapper:focus-within {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 1px var(--accent);
+    }
+
+    .tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(232,255,71,0.1);
+      border: 1px solid rgba(232,255,71,0.3);
+      color: var(--accent);
+      font-size: 12px;
+      font-family: var(--mono);
+      padding: 4px 10px;
+      border-radius: 2px;
+      animation: tagIn 0.15s ease;
+    }
+
+    @keyframes tagIn {
+      from { transform: scale(0.85); opacity: 0; }
+      to   { transform: scale(1);    opacity: 1; }
+    }
+
+    .tag-remove {
+      cursor: pointer;
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1;
+      transition: color 0.1s;
+    }
+    .tag-remove:hover { color: var(--danger); }
+
+    #tag-input {
+      background: transparent;
+      border: none;
+      outline: none;
+      color: var(--text);
+      font-family: var(--mono);
+      font-size: 13px;
+      flex: 1;
+      min-width: 160px;
+    }
+
+    #tag-input::placeholder { color: var(--muted); }
+
+    .input-hint {
+      font-size: 11px;
+      color: var(--muted);
+      margin-top: 8px;
+    }
+
+    /* ── Button ── */
+    .btn-generate {
+      width: 100%;
+      margin-top: 20px;
+      padding: 16px;
+      background: var(--accent);
+      color: #000;
+      border: none;
+      border-radius: 3px;
+      font-family: var(--sans);
+      font-weight: 700;
+      font-size: 13px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      cursor: pointer;
+      transition: all 0.15s;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .btn-generate:hover:not(:disabled) {
+      background: #f5ff80;
+      transform: translateY(-1px);
+      box-shadow: 0 4px 24px rgba(232,255,71,0.25);
+    }
+
+    .btn-generate:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    /* ── Loading State ── */
+    .loading-panel {
+      display: none;
+      text-align: center;
+      padding: 48px 28px;
+    }
+
+    .loading-panel.active { display: block; }
+
+    .spinner {
+      width: 32px;
+      height: 32px;
+      border: 2px solid var(--border);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+      margin: 0 auto 20px;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    .loading-steps {
+      list-style: none;
+      text-align: left;
+      display: inline-block;
+      margin-top: 16px;
+    }
+
+    .loading-steps li {
+      font-size: 12px;
+      color: var(--muted);
+      padding: 3px 0;
+      transition: color 0.3s;
+    }
+
+    .loading-steps li.active {
+      color: var(--accent2);
+    }
+
+    .loading-steps li.done {
+      color: var(--accent);
+    }
+
+    .loading-steps li::before {
+      content: '○  ';
+      font-size: 10px;
+    }
+
+    .loading-steps li.active::before { content: '◉  '; }
+    .loading-steps li.done::before   { content: '●  '; }
+
+    /* ── Stats Bar ── */
+    .stats-bar {
+      display: none;
+      gap: 20px;
+      padding: 16px 20px;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 3px;
+      margin-bottom: 16px;
+    }
+
+    .stats-bar.visible { display: flex; flex-wrap: wrap; }
+
+    .stat {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .stat-value {
+      font-family: var(--sans);
+      font-size: 22px;
+      font-weight: 700;
+      color: var(--accent);
+      line-height: 1;
+    }
+
+    .stat-label {
+      font-size: 10px;
+      color: var(--muted);
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .stat-divider {
+      width: 1px;
+      background: var(--border);
+      align-self: stretch;
+    }
+
+    /* ── Output Panel ── */
+    .output-panel {
+      display: none;
+    }
+
+    .output-panel.visible { display: block; }
+
+    .output-actions {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 16px;
+    }
+
+    .btn-secondary {
+      padding: 8px 16px;
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--text);
+      font-family: var(--mono);
+      font-size: 12px;
+      border-radius: 3px;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .btn-secondary:hover {
+      border-color: var(--accent2);
+      color: var(--accent2);
+    }
+
+    /* ── Markdown Rendered Output ── */
+    .briefing-content {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 3px;
+      padding: 32px;
+      overflow-x: auto;
+    }
+
+    /* Markdown styles inside briefing */
+    .briefing-content h1 {
+      font-family: var(--sans);
+      font-size: 22px;
+      font-weight: 800;
+      color: var(--text);
+      margin-bottom: 4px;
+      letter-spacing: 0;
+      text-transform: none;
+    }
+
+    .briefing-content h2 {
+      font-family: var(--sans);
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--accent);
+      margin: 28px 0 12px;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 8px;
+    }
+
+    .briefing-content h3 {
+      font-family: var(--sans);
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--accent2);
+      margin: 20px 0 8px;
+    }
+
+    .briefing-content p {
+      color: var(--text);
+      margin-bottom: 12px;
+    }
+
+    .briefing-content em {
+      color: var(--muted);
+      font-style: italic;
+    }
+
+    .briefing-content strong {
+      color: var(--text);
+      font-weight: 500;
+    }
+
+    .briefing-content ul {
+      list-style: none;
+      padding: 0;
+      margin: 8px 0 16px;
+    }
+
+    .briefing-content ul li {
+      padding: 3px 0 3px 16px;
+      position: relative;
+      color: var(--text);
+    }
+
+    .briefing-content ul li::before {
+      content: '—';
+      position: absolute;
+      left: 0;
+      color: var(--muted);
+    }
+
+    .briefing-content blockquote {
+      border-left: 2px solid var(--accent);
+      padding: 8px 16px;
+      margin: 12px 0;
+      background: rgba(232,255,71,0.04);
+      border-radius: 0 2px 2px 0;
+      font-style: italic;
+      color: var(--muted);
+    }
+
+    .briefing-content hr {
+      border: none;
+      border-top: 1px solid var(--border);
+      margin: 24px 0;
+    }
+
+    .briefing-content a {
+      color: var(--accent2);
+      text-decoration: none;
+    }
+
+    .briefing-content a:hover { text-decoration: underline; }
+
+    /* ── Error ── */
+    .error-box {
+      display: none;
+      padding: 16px;
+      background: rgba(255,71,71,0.08);
+      border: 1px solid rgba(255,71,71,0.3);
+      border-radius: 3px;
+      color: var(--danger);
+      font-size: 13px;
+      margin-top: 16px;
+    }
+
+    .error-box.visible { display: block; }
+
+    .warn-box {
+      display: none;
+      padding: 10px 16px;
+      background: rgba(232,255,71,0.05);
+      border: 1px solid rgba(232,255,71,0.2);
+      border-radius: 3px;
+      color: #b8cc30;
+      font-size: 11px;
+      margin-bottom: 12px;
+    }
+
+    .warn-box.visible { display: block; }
+
+    /* ── Footer ── */
+    footer {
+      margin-top: 60px;
+      padding-top: 20px;
+      border-top: 1px solid var(--border);
+      font-size: 11px;
+      color: var(--muted);
+      display: flex;
+      justify-content: space-between;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="container">
+
+    <!-- Header -->
+    <header>
+      <div class="logo-row">
+        <span class="logo-badge">Deskflow</span>
+        <span class="logo-divider">/</span>
+        <h1>Competitive Intelligence</h1>
+      </div>
+      <p class="tagline">
+        Automated competitor monitoring via <span>Reddit</span> + <span>Hacker News</span> — powered by Claude AI
+      </p>
+    </header>
+
+    <!-- Input Panel -->
+    <div class="panel">
+      <div class="panel-label">Competitors to Monitor</div>
+
+      <div class="tags-wrapper" id="tags-wrapper" onclick="document.getElementById('tag-input').focus()">
+        <!-- Tags injected here by JS -->
+        <input
+          type="text"
+          id="tag-input"
+          placeholder="Add competitor name, press Enter..."
+          autocomplete="off"
+        />
+      </div>
+
+      <p class="input-hint">Press <strong>Enter</strong> or <strong>comma</strong> to add. Click × to remove.</p>
+
+      <button class="btn-generate" id="btn-generate" onclick="generateBriefing()">
+        ⚡ Generate Intelligence Briefing
+      </button>
+    </div>
+
+    <!-- Error box -->
+    <div class="error-box" id="error-box"></div>
+
+    <!-- Loading Panel -->
+    <div class="panel loading-panel" id="loading-panel">
+      <div class="spinner"></div>
+      <p style="color: var(--muted); font-size: 13px;">Gathering intelligence...</p>
+      <ul class="loading-steps" id="loading-steps">
+        <li id="step-reddit">Fetching Reddit mentions</li>
+        <li id="step-hn">Fetching Hacker News mentions</li>
+        <li id="step-llm">Generating briefing via Claude</li>
+      </ul>
+    </div>
+
+    <!-- Stats Bar -->
+    <div class="stats-bar" id="stats-bar">
+      <div class="stat">
+        <span class="stat-value" id="stat-total">0</span>
+        <span class="stat-label">Total Mentions</span>
+      </div>
+      <div class="stat-divider"></div>
+      <div class="stat" id="per-competitor-stats"></div>
+    </div>
+
+    <!-- Output Panel -->
+    <div class="output-panel" id="output-panel">
+      <div class="warn-box" id="warn-box"></div>
+
+      <div class="output-actions">
+        <button class="btn-secondary" onclick="downloadMarkdown()">↓ Download .md</button>
+        <button class="btn-secondary" onclick="copyToClipboard()">⎘ Copy to Clipboard</button>
+        <button class="btn-secondary" onclick="resetUI()">↺ New Briefing</button>
+      </div>
+
+      <div class="briefing-content" id="briefing-content"></div>
+    </div>
+
+    <footer>
+      <span>Deskflow Internal Tool — Competitive Intel</span>
+      <span id="footer-time"></span>
+    </footer>
+
+  </div>
+
+  <script>
+    // ── State ──────────────────────────────────────────────────────────────────
+    let competitors = ["Freshservice", "Jira Service Management", "SysAid"];
+    let currentBriefing = "";
+
+    // ── Init: Render default tags ──────────────────────────────────────────────
+    document.addEventListener("DOMContentLoaded", () => {
+      renderTags();
+      document.getElementById("footer-time").textContent = new Date().toLocaleString();
+
+      // Tag input event listeners
+      const input = document.getElementById("tag-input");
+
+      input.addEventListener("keydown", (e) => {
+        if (e.key === "Enter" || e.key === ",") {
+          e.preventDefault();
+          addTag(input.value.trim().replace(",", ""));
+          input.value = "";
+        } else if (e.key === "Backspace" && input.value === "" && competitors.length > 0) {
+          competitors.pop();
+          renderTags();
+        }
+      });
+    });
+
+    // ── Tag Management ─────────────────────────────────────────────────────────
+    function addTag(value) {
+      if (!value || competitors.includes(value)) return;
+      competitors.push(value);
+      renderTags();
+    }
+
+    function removeTag(index) {
+      competitors.splice(index, 1);
+      renderTags();
+    }
+
+    function renderTags() {
+      const wrapper = document.getElementById("tags-wrapper");
+      const input   = document.getElementById("tag-input");
+
+      // Remove existing tags (keep the input)
+      Array.from(wrapper.querySelectorAll(".tag")).forEach(t => t.remove());
+
+      // Insert tags before the input
+      competitors.forEach((c, i) => {
+        const tag = document.createElement("span");
+        tag.className = "tag";
+        tag.innerHTML = `${c} <span class="tag-remove" onclick="removeTag(${i})">×</span>`;
+        wrapper.insertBefore(tag, input);
+      });
+    }
+
+    // ── Loading Step Helpers ───────────────────────────────────────────────────
+    function setStep(stepId, state) {
+      const el = document.getElementById(stepId);
+      el.className = state;   // 'active' | 'done'
+    }
+
+    // ── Main: Generate Briefing ────────────────────────────────────────────────
+    async function generateBriefing() {
+      if (competitors.length === 0) {
+        showError("Please add at least one competitor.");
+        return;
+      }
+
+      // Reset UI state
+      resetOutput();
+      document.getElementById("btn-generate").disabled = true;
+      document.getElementById("loading-panel").classList.add("active");
+
+      // Animate loading steps
+      // Step indicators are visual only — actual timing depends on backend
+      setStep("step-reddit", "active");
+      const stepTimer1 = setTimeout(() => {
+        setStep("step-reddit", "done");
+        setStep("step-hn", "active");
+      }, 1500);
+      const stepTimer2 = setTimeout(() => {
+        setStep("step-hn", "done");
+        setStep("step-llm", "active");
+      }, 3000);
+
+      try {
+        const response = await fetch("/generate", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ competitors })
+        });
+
+        clearTimeout(stepTimer1);
+        clearTimeout(stepTimer2);
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          throw new Error(data.error || "Server error");
+        }
+
+        // Mark all steps done
+        setStep("step-reddit", "done");
+        setStep("step-hn", "done");
+        setStep("step-llm", "done");
+
+        // Short pause for visual satisfaction, then show results
+        setTimeout(() => showResults(data), 400);
+
+      } catch (err) {
+        clearTimeout(stepTimer1);
+        clearTimeout(stepTimer2);
+        document.getElementById("loading-panel").classList.remove("active");
+        document.getElementById("btn-generate").disabled = false;
+        showError(err.message);
+      }
+    }
+
+    // ── Show Results ───────────────────────────────────────────────────────────
+    function showResults(data) {
+      document.getElementById("loading-panel").classList.remove("active");
+      document.getElementById("btn-generate").disabled = false;
+
+      currentBriefing = data.briefing;
+
+      // Stats bar
+      document.getElementById("stat-total").textContent = data.total_mentions;
+
+      const perCompStats = document.getElementById("per-competitor-stats");
+      perCompStats.innerHTML = "";
+      for (const [name, count] of Object.entries(data.competitors)) {
+        perCompStats.innerHTML += `
+          <div class="stat" style="margin-left:12px">
+            <span class="stat-value" style="font-size:18px">${count}</span>
+            <span class="stat-label">${name}</span>
+          </div>
+        `;
+      }
+      document.getElementById("stats-bar").classList.add("visible");
+
+      // Non-fatal warnings (e.g. one source failed)
+      if (data.fetch_errors && data.fetch_errors.length > 0) {
+        const warnBox = document.getElementById("warn-box");
+        warnBox.textContent = "⚠ " + data.fetch_errors.join(" | ");
+        warnBox.classList.add("visible");
+      }
+
+      // Render Markdown → HTML using marked.js
+      document.getElementById("briefing-content").innerHTML = marked.parse(currentBriefing);
+      document.getElementById("output-panel").classList.add("visible");
+    }
+
+    // ── Download Markdown ──────────────────────────────────────────────────────
+    async function downloadMarkdown() {
+      const response = await fetch("/download", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ briefing: currentBriefing })
+      });
+
+      const blob = await response.blob();
+      const url  = URL.createObjectURL(blob);
+      const a    = document.createElement("a");
+      a.href     = url;
+      a.download = `competitive_briefing_${new Date().toISOString().slice(0,10)}.md`;
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+
+    // ── Copy to Clipboard ──────────────────────────────────────────────────────
+    function copyToClipboard() {
+      navigator.clipboard.writeText(currentBriefing).then(() => {
+        const btn = event.target;
+        btn.textContent = "✓ Copied!";
+        setTimeout(() => btn.textContent = "⎘ Copy to Clipboard", 2000);
+      });
+    }
+
+    // ── Helpers ────────────────────────────────────────────────────────────────
+    function showError(msg) {
+      const el = document.getElementById("error-box");
+      el.textContent = "✕ " + msg;
+      el.classList.add("visible");
+    }
+
+    function resetOutput() {
+      document.getElementById("error-box").classList.remove("visible");
+      document.getElementById("output-panel").classList.remove("visible");
+      document.getElementById("stats-bar").classList.remove("visible");
+      document.getElementById("warn-box").classList.remove("visible");
+      document.getElementById("loading-panel").classList.remove("active");
+      document.getElementById("briefing-content").innerHTML = "";
+      // Reset loading steps
+      ["step-reddit","step-hn","step-llm"].forEach(id => {
+        document.getElementById(id).className = "";
+      });
+      currentBriefing = "";
+    }
+
+    function resetUI() {
+      resetOutput();
+    }
+  </script>
+</body>
+</html>
