@@ -3,6 +3,15 @@
 Automates competitive intelligence by pulling mentions from Reddit and Hacker News,
 then generating a structured briefing via Claude AI.
 
+
+<img width="1408" height="773" alt="image" src="https://github.com/user-attachments/assets/616efb72-6869-4c9c-8b3d-bf8cbfbe27c7" />
+
+<img width="1361" height="477" alt="image" src="https://github.com/user-attachments/assets/e7690ac3-2e0e-4ad6-826c-68846f061ae0" />
+<img width="739" height="803" alt="image" src="https://github.com/user-attachments/assets/8365eeed-5d3b-4a76-accf-8c76c0111518" />
+<img width="723" height="815" alt="image" src="https://github.com/user-attachments/assets/54fbb844-230b-4226-a0bb-606c097ca325" />
+<img width="734" height="319" alt="image" src="https://github.com/user-attachments/assets/59d416e4-5895-42e0-a2c1-345d2a460d0f" />
+
+
 ## Project Structure
 
 ```
