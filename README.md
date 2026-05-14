@@ -3,7 +3,7 @@
 Automates competitive intelligence by pulling mentions from Reddit and Hacker News,
 then generating a structured briefing via Claude AI.
 
-https://youtu.be/shAA9f-2Wt8?si=Z1OK4KuWx_Tw0pFN
+Demo Video : https://youtu.be/shAA9f-2Wt8?si=Z1OK4KuWx_Tw0pFN
 
 <img width="1408" height="773" alt="image" src="https://github.com/user-attachments/assets/616efb72-6869-4c9c-8b3d-bf8cbfbe27c7" />
 
